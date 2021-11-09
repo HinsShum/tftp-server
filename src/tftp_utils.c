@@ -40,7 +40,7 @@ int32_t tftp_utils_get_first_string(const uint8_t *buf, uint16_t size, tftp_opt_
     for(uint16_t i = 0; i < size; ++i) {
         if(isalnum(buf[i])) {
             ctx->cur = &buf[i];
-            ctx->cur_size = strlen(ctx->cur);
+            ctx->cur_size = strlen((char *)ctx->cur);
             if((ctx->cur + ctx->cur_size) > (buf + size)) {
                 ctx->cur_size = buf + size - ctx->cur;
                 ctx->next = NULL;
@@ -70,7 +70,7 @@ int32_t tftp_utils_get_next_string(tftp_opt_context *ctx)
             ctx->cur_size = 0;
             break;
         }
-        ctx->cur_size = strlen(ctx->cur);
+        ctx->cur_size = strlen((char *)ctx->cur);
         if((ctx->cur + ctx->cur_size) > (ctx->buf + ctx->size)) {
             ctx->cur_size = ctx->buf + ctx->size - ctx->cur;
             ctx->next = NULL;

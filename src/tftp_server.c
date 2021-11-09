@@ -146,7 +146,7 @@ static uint32_t __tftp_error_make(uint8_t *buf, uint16_t err_code, const char *e
     buf[1] = ERROR & 0xFF;
     buf[2] = (err_code >> 8) & 0xFF;
     buf[3] = err_code & 0xFF;
-    strcpy(&buf[4], err_msg);
+    strcpy((char *)&buf[4], err_msg);
     size = 4 + strlen(err_msg);
     buf[size] = '\0';
     size++;
@@ -173,7 +173,7 @@ static void _tftp_rrq(void)
 static void _tftp_wrq(void)
 {
     tftp_req_t *req = (tftp_req_t *)tftp.ctx->buf;
-    const char *filename = NULL, *mode = NULL, *str_blksize = NULL, *str_timeout = NULL, *str_tsize = NULL;
+    const char *filename = NULL, *mode = NULL;
     uint32_t blksize = 0, timeout = 0, tsize = 0;
     tftp_opt_context opt_ctx = {0};
     char *p = NULL;
@@ -190,29 +190,29 @@ static void _tftp_wrq(void)
             tftp.ctx->ops.send(tftp.ctx);
             break;
         }
-        filename = opt_ctx.cur;
+        filename = (char *)opt_ctx.cur;
         if(tftp_utils_get_next_string(&opt_ctx) != 0) {
             tftp.ctx->send_size = __tftp_error_make(tftp.ctx->buf, ERRCODE_OPT_ERROR, "opt negotiation error");
             tftp.ctx->ops.send(tftp.ctx);
             break;
         }
-        mode = opt_ctx.cur;
+        mode = (char *)opt_ctx.cur;
         do {
-            if(strcmp(opt_ctx.cur, "blksize") == 0) {
+            if(strcmp((char *)opt_ctx.cur, "blksize") == 0) {
                 if(tftp_utils_get_next_string(&opt_ctx) != 0) {
                     break;
                 }
-                blksize = strtoul(opt_ctx.cur, NULL, 10);
-            } else if(strcmp(opt_ctx.cur, "timeout") == 0) {
+                blksize = strtoul((char *)opt_ctx.cur, NULL, 10);
+            } else if(strcmp((char *)opt_ctx.cur, "timeout") == 0) {
                 if(tftp_utils_get_next_string(&opt_ctx) != 0) {
                     break;
                 }
-                timeout = strtoul(opt_ctx.cur, NULL, 10);
-            } else if(strcmp(opt_ctx.cur, "tsize") == 0) {
+                timeout = strtoul((char *)opt_ctx.cur, NULL, 10);
+            } else if(strcmp((char *)opt_ctx.cur, "tsize") == 0) {
                 if(tftp_utils_get_next_string(&opt_ctx) != 0) {
                     break;
                 }
-                tsize = strtoul(opt_ctx.cur, NULL, 10);
+                tsize = strtoul((char *)opt_ctx.cur, NULL, 10);
             }
             tftp_utils_get_next_string(&opt_ctx);
         } while(opt_ctx.next);
@@ -241,7 +241,7 @@ static void _tftp_wrq(void)
         tftp.tsize = tftp.ctx->ops.filesize_verify(tsize);
         /* wrq ok, make oack */
         req->opc = __htons(OACK);
-        p =  req->data;
+        p =  (char *)req->data;
         if(blksize) {
             tftp.blksize = tftp.ctx->ops.blksize_verify(blksize);
             p[sprintf(p, "%s", "blksize")] = '\0';
@@ -353,7 +353,7 @@ void tftp_server_receive(void)
 
     if(tftp.ctx->ops.recv(tftp.ctx, tftp.timeout)) {
         opc = _get_opc(tftp.ctx->buf);
-        cb = _find_cb(opc);
+        cb = (void (*)(void))_find_cb(opc);
         if(cb) {
             cb();
         } else {
